@@ -6,6 +6,8 @@
     <title>Happy Birthday, Anush</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- GoatCounter analytics: fetch anonymous usage data -->
+    <script data-goatcounter="https://xos-int.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
     <style>
         :root {
             --bg: #0a0a0a;
@@ -356,7 +358,7 @@
     <div class="ornament bl"></div>
     <div class="ornament br"></div>
 
-    <!-- TIMER LOCK SCREEN (fullscreen countdown until 12:00 AM 17 April) -->
+    <!-- TIMER LOCK SCREEN (fullscreen countdown until 12:00 AM 17 April 2026) -->
     <div id="timerOverlay" class="timer-overlay">
         <div class="timer-card">
             <div class="timer-label">Timer</div>
@@ -456,7 +458,7 @@
             if (timerDisplaySpan) timerDisplaySpan.innerText = display;
         }
         
-        // UNLOCK: hides timer overlay, shows first screen (s1)
+        // UNLOCK: hides timer overlay, shows first screen (s1) + track unlock via goatcounter
         function unlockMainContent() {
             if (unlocked) return;
             unlocked = true;
@@ -478,6 +480,14 @@
             
             // optional tiny celebration for unlocking
             confetti({ particleCount: 80, spread: 50, origin: { y: 0.7 }, colors: ['#c9a84c', '#e8c87a'] });
+            
+            // --- GoatCounter: track timer unlock event (page is now accessible)
+            if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+                window.goatcounter.count({
+                    event: true,
+                    path: 'timer_unlock'
+                });
+            }
         }
         
         // ----- TRIPLE-CLICK DETECTION (simultaneous / rapid 3 clicks) -----
@@ -570,50 +580,17 @@
             }
         }
         
-        // ----- DATE VERIFICATION (with Telegram notification on correct only, device+browser)
-        const BOT_TOKEN = '8668013778:AAEnWA0uY3tDUOQP1uHQEVJdcAGaWgfy4eA';
-        const CHAT_ID   = '7217028526';
-        
-        function getDeviceOS() {
-            const ua = navigator.userAgent;
-            if (/iPhone|iPad|iPod/i.test(ua)) return '📱 iOS';
-            if (/Android/i.test(ua)) return '📱 Android';
-            if (/Linux/i.test(ua) && !/Android/i.test(ua)) return '🐧 Linux';
-            if (/Windows NT/i.test(ua)) return '🖥️ Windows';
-            if (/Mac OS X/i.test(ua)) return '🍏 macOS';
-            return '💻 Other OS';
-        }
-        
-        function getBrowserName() {
-            const ua = navigator.userAgent;
-            if (/Instagram/i.test(ua)) return 'Instagram In-App';
-            if (/FBAN|FBAV/i.test(ua)) return 'Facebook In-App';
-            if (/WhatsApp/i.test(ua)) return 'WhatsApp In-App';
-            if (/Telegram/i.test(ua)) return 'Telegram In-App';
-            if (/Snapchat/i.test(ua)) return 'Snapchat In-App';
-            if (/Twitter/i.test(ua)) return 'Twitter In-App';
-            if (/EdgA|Edg\//i.test(ua)) return 'Microsoft Edge';
-            if (/OPR|Opera/i.test(ua)) return 'Opera';
-            if (/SamsungBrowser/i.test(ua)) return 'Samsung Internet';
-            if (/MiuiBrowser/i.test(ua)) return 'MIUI Browser';
-            if (/UCBrowser/i.test(ua)) return 'UC Browser';
-            if (/Firefox/i.test(ua)) return 'Firefox';
-            if (/Chrome/i.test(ua) && !/Edg/i.test(ua) && !/OPR/i.test(ua)) return 'Chrome';
-            if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
-            return 'Other Browser';
-        }
-        
-        async function notifyCorrectAccess() {
-            const device = getDeviceOS();
-            const browser = getBrowserName();
-            const message = `🎂 ACCESS GRANTED: Anush verified.\n📱 ${device}\n🌐 ${browser}`;
-            try {
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'HTML' })
+        // ----- DATE VERIFICATION (success tracked via GoatCounter; no Telegram) -----
+        // Custom analytics event for correct birthday entry
+        function trackSuccessfulVerification() {
+            if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+                window.goatcounter.count({
+                    event: true,
+                    path: 'birthday_verified'
                 });
-            } catch(e) { /* silent */ }
+            }
+            // optional: you could also add a console log for debugging
+            console.log('✅ Birthday verified — event sent to GoatCounter');
         }
         
         // date input formatting
@@ -646,11 +623,14 @@
             const correctDate = '20 / 01 / 2007';
             
             if (entered === correctDate) {
-                notifyCorrectAccess();   // only on correct access: device + browser
+                // SUCCESS: track via goatcounter (replaces telegram notification)
+                trackSuccessfulVerification();
                 // move to scratch screen (s4)
                 document.getElementById('s3')?.classList.remove('visible');
                 document.getElementById('s4')?.classList.add('visible');
                 initScratchCard();
+                // reset attempt counter for next potential visits (but no need)
+                if (errorMsgDiv) errorMsgDiv.style.opacity = '0';
             } else {
                 attemptCount++;
                 if (errorMsgDiv) errorMsgDiv.style.opacity = '1';
@@ -706,6 +686,14 @@
                     if (revealAudio) revealAudio.play().catch(() => {});
                     fireConfetti();
                     setTimeout(fireConfetti, 400);
+                    
+                    // track scratch completion event via goatcounter (gift fully revealed)
+                    if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+                        window.goatcounter.count({
+                            event: true,
+                            path: 'gift_scratch_complete'
+                        });
+                    }
                 }
             };
             
@@ -746,6 +734,16 @@
         
         // Ensure that main screens are not visible before unlock (already hidden via .screen default display:none)
         // No extra actions needed.
+        
+        // Additional: track initial page view via goatcounter manually if needed? 
+        // The async script already sends pageview on load, but we can force a custom event for the locked state (optional)
+        // Not required; however we'll send a "locked_visit" event once on page load to see total visits before unlock
+        if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+            window.goatcounter.count({
+                event: true,
+                path: 'page_loaded_locked'
+            });
+        }
     </script>
 </body>
 </html>
